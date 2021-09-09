@@ -1,4 +1,4 @@
-import React, { useContext, Component } from 'react';
+import React, { useContext, useState, useEffect, Component } from 'react';
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -6494,90 +6494,127 @@ var moment = createCommonjsModule(function (module, exports) {
 })));
 });
 
-/*
-Copyright (C) 2018  Ermanno Scanagatta
+var convert = function convert(pointdate, birthdate, unit) {
+  if (unit === "month") return convertMonths(pointdate, birthdate);
+  if (unit === "week") return convertWeeks(pointdate, birthdate);
+  return 0;
+};
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+var convertWeeks = function convertWeeks(pointdate, birthdate) {
+  var daydiff = pointdate.diff(birthdate, "day");
+  var diff = Math.round(daydiff * 10 / 7) / 10;
+  return diff;
+};
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+var convertMonths = function convertMonths(pointdate, birthdate) {
+  var unit = "month";
+  var daydiff = pointdate.diff(birthdate, "day");
+  var datediff = pointdate.diff(birthdate, unit);
+  var diff = 0;
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+  if (daydiff > 365) {
+    var years = pointdate.diff(birthdate, "year");
+    var months = datediff % 12;
+    var rest = daydiff - years * 365 - months * 30;
+    diff = datediff + Math.round(rest * 10 / 30) / 10;
+  } else {
+    var _rest = daydiff - datediff * 30;
+
+    diff = datediff + Math.round(_rest * 10 / 30) / 10;
+  }
+
+  return diff;
+};
 
 var PatientData = function PatientData(_ref) {
   var patient = _ref.patient,
       showlabels = _ref.showlabels,
       showlines = _ref.showlines;
   var store = useContext(StoreContext);
-  var labels = [];
-  var points = [];
-  var lineStr = "";
-  patient.measures.forEach(function (m, i) {
-    if (!m) {
-      return;
-    }
 
-    var pointdate = moment(m.date);
-    var birthdate = moment(patient.birthdate);
-    var diffunit = store.getDataset().getUnitX();
+  var _useState = useState([]),
+      _useState2 = _slicedToArray(_useState, 2),
+      labels = _useState2[0],
+      setLabels = _useState2[1];
 
-    if (diffunit === "year") {
-      diffunit = "month";
-    }
+  var _useState3 = useState([]),
+      _useState4 = _slicedToArray(_useState3, 2),
+      points = _useState4[0],
+      setPoints = _useState4[1];
 
-    var datediff = pointdate.diff(birthdate, diffunit);
-    var value = m[store.getDataset().getDataType()];
-    var percentile = store.getDataset().getPercentileForValue(datediff, value);
-    var dx = store.transformX(datediff);
+  var _useState5 = useState(""),
+      _useState6 = _slicedToArray(_useState5, 2),
+      lineString = _useState6[0],
+      setLineString = _useState6[1];
 
-    if (dx === null || dx === undefined || dx < 0 || dx > store.getMeasures().width) {
-      return;
-    }
+  useEffect(function () {
+    var lineStr = "";
+    var pp = [];
+    var ll = [];
+    patient.measures.forEach(function (m, i) {
+      if (!m) {
+        return;
+      }
 
-    var x = store.getMeasures().left + dx;
-    var y = store.getMeasures().bottom - store.transformY(value);
+      var pointdate = moment(m.date);
+      var birthdate = moment(patient.birthdate);
+      var diffunit = store.getDataset().getUnitX();
 
-    if (Number.isNaN(y)) {
-      return;
-    }
+      if (diffunit === "year") {
+        diffunit = "month";
+      }
 
-    if (showlabels) {
-      labels.push( /*#__PURE__*/React.createElement("text", {
-        key: "label-".concat(i),
-        name: "label-".concat(i),
-        className: "percentile-label",
-        x: x,
-        y: y - 10,
-        textAnchor: "middle",
+      var diff = convert(pointdate, birthdate, diffunit);
+      var value = m[store.getDataset().getDataType()];
+      var percentile = store.getDataset().getPercentileForValue(diff, value);
+      var dx = store.transformX(diff);
+      var dy = store.transformY(value);
+
+      if (dx === null || dx === undefined || dx < 0 || dx > store.getMeasures().width) {
+        return;
+      }
+
+      var x = store.getMeasures().left + dx;
+      var y = store.getMeasures().bottom - dy;
+
+      if (Number.isNaN(y)) {
+        return;
+      }
+
+      if (showlabels) {
+        ll.push( /*#__PURE__*/React.createElement("text", {
+          key: "label-".concat(i),
+          name: "label-".concat(i),
+          className: "percentile-label",
+          x: x,
+          y: y - 10,
+          textAnchor: "middle",
+          fill: patient.color || "red"
+        }, percentile));
+      }
+
+      pp.push( /*#__PURE__*/React.createElement("g", {
+        key: "dot-".concat(i),
+        id: "dot-".concat(i)
+      }, /*#__PURE__*/React.createElement("circle", {
+        className: "percentile-point",
+        cx: x,
+        cy: y,
+        r: 3,
         fill: patient.color || "red"
-      }, percentile));
-    }
-
-    points.push( /*#__PURE__*/React.createElement("g", {
-      key: "dot-".concat(i),
-      id: "dot-".concat(i)
-    }, /*#__PURE__*/React.createElement("circle", {
-      className: "percentile-point",
-      cx: x,
-      cy: y,
-      r: 3,
-      fill: patient.color || "red"
-    })));
-    lineStr += "".concat(i === 0 ? "M" : "L").concat(x, " ").concat(y, " ");
-  });
+      })));
+      lineStr += "".concat(i === 0 ? "M" : "L").concat(x, " ").concat(y, " ");
+    });
+    setLineString(lineStr);
+    setPoints(pp);
+    setLabels(ll);
+  }, [patient, store, showlabels]);
   return /*#__PURE__*/React.createElement("g", {
     name: "patient-data",
     className: "patient-data"
   }, showlines ? /*#__PURE__*/React.createElement("path", {
     className: "percentile-line",
-    d: lineStr,
+    d: lineString,
     stroke: patient.color || "red"
   }) : "", labels, points);
 };
@@ -6717,10 +6754,11 @@ var TouchAreas = function TouchAreas(_ref) {
   };
 
   var getPointValue = function getPointValue(measure) {
-    var pointdate = moment(measure.date);
-    var datediff = pointdate.diff(birthdate, diffunit);
+    var pointdate = moment(measure.date); // const datediff = pointdate.diff(birthdate, diffunit);
+
+    var diff = convert(pointdate, birthdate, diffunit);
     var val = measure[ds.getDataType()];
-    var percentile = ds.getPercentileForValue(datediff, val);
+    var percentile = ds.getPercentileForValue(diff, val);
     var value = "".concat(ds.titleY, ": ").concat(measure[ds.dataType], " (").concat(percentile, "%)");
     return value;
   };
@@ -6732,9 +6770,9 @@ var TouchAreas = function TouchAreas(_ref) {
     }
 
     var pointdate = moment(m.date);
-    var datediff = pointdate.diff(birthdate, diffunit);
+    var diff = convert(pointdate, birthdate, diffunit);
     var value = m[store.getDataset().getDataType()];
-    var dx = store.transformX(datediff);
+    var dx = store.transformX(diff);
 
     if (dx === null || dx === undefined || dx < 0 || dx > store.getMeasures().width) {
       return;
@@ -7200,6 +7238,16 @@ var Dataset = /*#__PURE__*/function () {
   }, {
     key: "getPercentileForValue",
     value: function getPercentileForValue(x, y) {
+      var p0 = Math.trunc(x);
+      var p1 = p0 + 1;
+      var percentile0 = Number.parseInt(this._getPercentileForValue(p0, y), 10);
+      var percentile1 = Number.parseInt(this._getPercentileForValue(p1, y), 10);
+      var percentile = Math.round(percentile0 + (x - p0) * (percentile1 - percentile0));
+      return percentile;
+    }
+  }, {
+    key: "_getPercentileForValue",
+    value: function _getPercentileForValue(x, y) {
       var data;
       this.lmsdata.forEach(function (v) {
         var d = v[0];
