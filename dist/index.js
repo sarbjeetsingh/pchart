@@ -6685,7 +6685,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 var TouchAreas = function TouchAreas(_ref) {
   var patient = _ref.patient,
-      showTooltip = _ref.showTooltip;
+      showTooltip = _ref.showTooltip,
+      dateFormat = _ref.dateFormat;
   var store = React.useContext(StoreContext);
   var ds = store.getDataset();
   var shortNames = ds.getShortNames();
@@ -6699,16 +6700,16 @@ var TouchAreas = function TouchAreas(_ref) {
 
   var getPointTitle = function getPointTitle(measure) {
     var pointdate = moment(measure.date);
-    var age = '';
-    var diffY = pointdate.diff(birthdate, 'year');
+    var age = "";
+    var diffY = pointdate.diff(birthdate, "year");
 
     if (diffY >= 1) {
-      var diffM = pointdate.diff(birthdate, 'month') - 12 * diffY;
+      var diffM = pointdate.diff(birthdate, "month") - 12 * diffY;
       age = "".concat(diffY, " ").concat(shortNames.year, ", ").concat(diffM, " ").concat(shortNames.month);
     } else {
-      var diffD = pointdate.diff(birthdate, 'day');
+      var diffD = pointdate.diff(birthdate, "day");
 
-      var _diffM = pointdate.diff(birthdate, 'month');
+      var _diffM = pointdate.diff(birthdate, "month");
 
       if (diffD <= 91) {
         // 13 sett
@@ -6718,7 +6719,7 @@ var TouchAreas = function TouchAreas(_ref) {
       }
     }
 
-    var title = "".concat(moment(measure.date).format("DD.MM.YYYY"), " (").concat(age, ")");
+    var title = "".concat(moment(measure.date).format(dateFormat ? dateFormat : "DD MMM, YYYY"), " (").concat(age, ")");
     return title;
   };
 
@@ -6827,8 +6828,8 @@ var PChart = /*#__PURE__*/function (_Component) {
       tooltipX: 0,
       tooltipY: 0,
       tooltipVisible: false,
-      tooltipTitle: '',
-      tooltipValue: ''
+      tooltipTitle: "",
+      tooltipValue: ""
     };
     return _this;
   }
@@ -6860,7 +6861,8 @@ var PChart = /*#__PURE__*/function (_Component) {
           theme = _this$props2.theme,
           showtitle = _this$props2.showtitle,
           showlabels = _this$props2.showlabels,
-          showlines = _this$props2.showlines;
+          showlines = _this$props2.showlines,
+          dateFormat = _this$props2.dateFormat;
       var title;
 
       if (showtitle) {
@@ -6874,26 +6876,29 @@ var PChart = /*#__PURE__*/function (_Component) {
         }, dataset.title);
       }
 
-      var pp;
+      var pp = [];
 
-      if (Array.isArray(patients)) {
-        pp = patients;
-      } else {
-        pp = [patients];
+      if (patients) {
+        if (Array.isArray(patients)) {
+          pp = patients;
+        } else {
+          pp = [patients];
+        }
       }
 
-      var patientdata = pp.map(function (patient, i) {
+      var patientdata = pp.length > 0 ? pp.map(function (patient, i) {
         return /*#__PURE__*/React__default.createElement(PatientData, {
           key: "patientdata-".concat(i),
           patient: patient,
           showlabels: showlabels,
           showlines: showlines
         });
-      });
+      }) : null;
       var touchareas = pp.map(function (patient, i) {
         return /*#__PURE__*/React__default.createElement(TouchAreas, {
           key: "toucharea-".concat(i),
           patient: patient,
+          dateFormat: dateFormat,
           showTooltip: function showTooltip(x, y, ttle, value) {
             _this2.setState({
               tooltipX: x,
@@ -6944,7 +6949,7 @@ var PChart = /*#__PURE__*/function (_Component) {
         style: {
           backgroundColor: defaultTheme.backgroundColor
         }
-      }, title, /*#__PURE__*/React__default.createElement(Backdrop, null), /*#__PURE__*/React__default.createElement(XAxis, null), /*#__PURE__*/React__default.createElement(YAxis, null), /*#__PURE__*/React__default.createElement(Grid, null), /*#__PURE__*/React__default.createElement(Areas, null), /*#__PURE__*/React__default.createElement(Percentiles, null), patientdata, /*#__PURE__*/React__default.createElement(Tooltip, {
+      }, title, /*#__PURE__*/React__default.createElement(Backdrop, null), /*#__PURE__*/React__default.createElement(XAxis, null), /*#__PURE__*/React__default.createElement(YAxis, null), /*#__PURE__*/React__default.createElement(Grid, null), /*#__PURE__*/React__default.createElement(Areas, null), /*#__PURE__*/React__default.createElement(Percentiles, null), patientdata && patientdata, /*#__PURE__*/React__default.createElement(Tooltip, {
         x: tooltipX,
         y: tooltipY,
         visible: tooltipVisible,

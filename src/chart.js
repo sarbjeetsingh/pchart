@@ -48,7 +48,13 @@ class PChart extends Component {
       this.onUpdate
     );
     this.setSize(width, height);
-    this.state = { tooltipX: 0, tooltipY: 0, tooltipVisible: false, tooltipTitle: '', tooltipValue: '' };
+    this.state = {
+      tooltipX: 0,
+      tooltipY: 0,
+      tooltipVisible: false,
+      tooltipTitle: "",
+      tooltipValue: "",
+    };
   }
 
   componentDidUpdate(prevprops) {
@@ -91,6 +97,7 @@ class PChart extends Component {
       showtitle,
       showlabels,
       showlines,
+      dateFormat,
     } = this.props;
     let title;
 
@@ -108,30 +115,41 @@ class PChart extends Component {
         </text>
       );
     }
-    let pp;
-    if (Array.isArray(patients)) {
-      pp = patients;
-    } else {
-      pp = [patients];
+    let pp = [];
+    if (patients) {
+      if (Array.isArray(patients)) {
+        pp = patients;
+      } else {
+        pp = [patients];
+      }
     }
 
-    const patientdata = pp.map((patient, i) => (
-      <PatientData
-        key={`patientdata-${i}`}
-        patient={patient}
-        showlabels={showlabels}
-        showlines={showlines}
-      />
-    ));
-
+    const patientdata =
+      pp.length > 0
+        ? pp.map((patient, i) => (
+            <PatientData
+              key={`patientdata-${i}`}
+              patient={patient}
+              showlabels={showlabels}
+              showlines={showlines}
+            />
+          ))
+        : null;
 
     const touchareas = pp.map((patient, i) => (
       <Touch
         key={`toucharea-${i}`}
         patient={patient}
+        dateFormat={dateFormat}
         showTooltip={(x, y, ttle, value) => {
           this.setState(
-            { tooltipX: x, tooltipY: y, tooltipVisible: true, tooltipTitle: ttle, tooltipValue: value},
+            {
+              tooltipX: x,
+              tooltipY: y,
+              tooltipVisible: true,
+              tooltipTitle: ttle,
+              tooltipValue: value,
+            },
             () => {
               clearTimeout(this.tooltipTimeout);
               this.tooltipTimeout = setTimeout(() => {
@@ -158,7 +176,8 @@ class PChart extends Component {
       _theme = defaultTheme;
     }
 
-    const { tooltipX, tooltipY, tooltipVisible, tooltipTitle, tooltipValue } = this.state;
+    const { tooltipX, tooltipY, tooltipVisible, tooltipTitle, tooltipValue } =
+      this.state;
     return (
       <StoreContext.Provider value={this.store}>
         <ThemeContext.Provider value={_theme}>
@@ -174,8 +193,14 @@ class PChart extends Component {
             <Grid />
             <Areas />
             <Percentiles />
-            {patientdata}
-            <Tooltip x={tooltipX} y={tooltipY} visible={tooltipVisible} title={tooltipTitle} value={tooltipValue} />
+            {patientdata && patientdata}
+            <Tooltip
+              x={tooltipX}
+              y={tooltipY}
+              visible={tooltipVisible}
+              title={tooltipTitle}
+              value={tooltipValue}
+            />
             {touchareas}
           </svg>
         </ThemeContext.Provider>

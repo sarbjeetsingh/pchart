@@ -19,7 +19,7 @@ import React, { useContext } from "react";
 import moment from "moment";
 import { StoreContext } from "./context";
 
-const TouchAreas = ({ patient, showTooltip }) => {
+const TouchAreas = ({ patient, showTooltip, dateFormat }) => {
   const store = useContext(StoreContext);
   const ds = store.getDataset();
   const shortNames = ds.getShortNames();
@@ -31,15 +31,16 @@ const TouchAreas = ({ patient, showTooltip }) => {
 
   const getPointTitle = (measure) => {
     const pointdate = moment(measure.date);
-    let age = '';
-    const diffY = pointdate.diff(birthdate, 'year');
-    if (diffY>=1) {
-      const diffM = pointdate.diff(birthdate, 'month') - 12*diffY; 
+    let age = "";
+    const diffY = pointdate.diff(birthdate, "year");
+    if (diffY >= 1) {
+      const diffM = pointdate.diff(birthdate, "month") - 12 * diffY;
       age = `${diffY} ${shortNames.year}, ${diffM} ${shortNames.month}`;
     } else {
-      const diffD = pointdate.diff(birthdate, 'day');
-      const diffM = pointdate.diff(birthdate, 'month');
-      if (diffD<=91) { // 13 sett
+      const diffD = pointdate.diff(birthdate, "day");
+      const diffM = pointdate.diff(birthdate, "month");
+      if (diffD <= 91) {
+        // 13 sett
         age = `${parseInt(diffD / 7, 10)} ${shortNames.week}`;
       } else {
         age = `${diffM} ${shortNames.month}`;
@@ -47,7 +48,7 @@ const TouchAreas = ({ patient, showTooltip }) => {
     }
 
     const title = `${moment(measure.date).format(
-      "DD.MM.YYYY"
+      dateFormat ? dateFormat : "DD MMM, YYYY"
     )} (${age})`;
     return title;
   };
